@@ -16,7 +16,13 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with('project', 'user', 'assignedTo')->paginate(10);
+        $userId = Auth::id();
+        $tasks = Task::with('project', 'user', 'assignedTo')
+            ->where(function ($query) use ($userId) {
+            $query->where('created_by', $userId)
+                  ->orWhere('user_id', $userId);
+            })
+            ->paginate(10);
         return view('tasks.index', compact('tasks'));
     }
 
@@ -53,7 +59,15 @@ class TaskController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $task = Task::with('project', 'user', 'assignedTo')
+            ->where('id', $id)
+            ->where(function ($query) {
+            $userId = Auth::id();
+            $query->where('created_by', $userId)
+                  ->orWhere('assigned_to', $userId);
+            })
+            ->firstOrFail();
+        return view('tasks.show', compact('task'));
     }
 
     /**
